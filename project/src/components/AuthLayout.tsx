@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { supabase } from "../lib/supabase";
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const { user, setUser, setSession, loading, setLoading } = useAuthStore();
@@ -14,14 +14,20 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [setSession, setUser, setLoading]);
 
   if (loading) {
     return (
@@ -31,11 +37,11 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && location.pathname !== '/auth') {
+  if (!user && location.pathname !== "/auth") {
     return <Navigate to="/auth" replace />;
   }
 
-  if (user && location.pathname === '/auth') {
+  if (user && location.pathname === "/auth") {
     return <Navigate to="/" replace />;
   }
 
