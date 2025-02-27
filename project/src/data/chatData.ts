@@ -136,10 +136,6 @@ export const qaDataset: QAData[] = [
   {
     question: "Explain caching",
     answer: "Caching is a technique of storing frequently accessed data in a faster storage system (cache) to reduce database load and improve application performance. Common caching strategies include in-memory caching, browser caching, and CDN caching."
-  },
-  {
-    question:"How are you?",
-    answer:"I am fine! Thanks for asking!"
   }
 ];
 
