@@ -1,5 +1,5 @@
 Question-Answering-Assistant-ChatBot
-This project demonstrates an interactive, responsive chatbot designed to engage users through an intuitive drag-and-drop conversation flow, interactive elements (buttons, quick replies, menus), and a design that adapts seamlessly across desktop, tablet, and mobile devices. Although the current version is trained on a small dataset—which may limit its ability to answer some questions—it includes fallback responses and is structured for iterative data enhancement to improve performance over time.
+This project demonstrates an interactive, responsive chatbot designed to engage users through an intuitive drag-and-drop conversation flow, interactive elements (buttons, quick replies, menus), and a design that adapts seamlessly across desktop, tablet, and mobile devices. Although the current version is trained on a small dataset—which may limit its ability to answer some questions—it includes fallback responses and is structured for iterative data enhancement to improve performance over time.....
 
 Features
 Interactive Conversational Flow:
