@@ -24,7 +24,6 @@ Getting Started
 Follow these steps to set up and run the chatbot:
 
 1. Clone the Repository
-
 bash
 
 Copy
