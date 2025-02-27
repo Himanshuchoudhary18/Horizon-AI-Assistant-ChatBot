@@ -24,11 +24,17 @@ Getting Started
 Follow these steps to set up and run the chatbot:
 
 1. Clone the Repository
+
 bash
+
 Copy
+
 Edit
+
 git clone https://github.com/Himanshuchoudhary18/Question-Answering-Assistant-ChatBot.git
+
 cd Question-Answering-Assistant-ChatBot
+
 2. Import the Chatbot Template
 Use the provided templates and configuration files to set up your chatbot project within the Bolt.new platform.
 3. Customize the Bot
