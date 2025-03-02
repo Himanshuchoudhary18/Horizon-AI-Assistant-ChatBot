@@ -82,6 +82,14 @@ export function LogoutPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Redirecting you to the login page...
             </p>
+            <div className="mt-4">
+              <button
+                onClick={() => navigate('/auth')}
+                className="px-6 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 text-sm"
+              >
+                Back to Login
+              </button>
+            </div>
           </div>
         )}
       </div>
