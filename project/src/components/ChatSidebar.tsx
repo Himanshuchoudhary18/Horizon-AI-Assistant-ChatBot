@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import { useAuthStore } from '../store/authStore';
 
@@ -17,6 +17,7 @@ interface ChatSidebarProps {
   onSelectChat: (id: string, messages?: any[]) => void;
   currentChatId: string | null;
   onNewChat: () => void;
+  onDeleteChat: (id: string) => void;
   isMobile?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function ChatSidebar({
   onSelectChat, 
   currentChatId,
   onNewChat,
+  onDeleteChat,
   isMobile = false
 }: ChatSidebarProps) {
   const { user } = useAuthStore();
@@ -51,8 +53,16 @@ export function ChatSidebar({
     }
   };
 
+  const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this chat?')) {
+      onDeleteChat(chatId);
+    }
+  };
+
   return (
     <>
+      {/* Sidebar toggle button - desktop */}
       {!isMobile && (
         <button
           onClick={onToggle}
@@ -63,6 +73,7 @@ export function ChatSidebar({
         </button>
       )}
       
+      {/* Overlay for mobile */}
       <div 
         className={`fixed inset-0 bg-black/50 z-20 transition-opacity duration-300 md:hidden ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -70,6 +81,7 @@ export function ChatSidebar({
         onClick={onToggle}
       ></div>
       
+      {/* Sidebar container */}
       <div className={`fixed top-0 left-0 h-full z-30 transition-transform duration-300 transform ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
@@ -102,27 +114,38 @@ export function ChatSidebar({
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {chatHistory && chatHistory.length > 0 ? (
               chatHistory.map((chat) => (
-                <button
+                <div
                   key={chat.id}
-                  onClick={() => onSelectChat(chat.id, chat.messages)}
-                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                  className={`w-full p-3 rounded-lg transition-colors group ${
                     currentChatId === chat.id
                       ? 'bg-purple-100 dark:bg-purple-900'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <MessageSquare className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                        {chat.title || 'Untitled Chat'}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {safeFormatDate(chat.timestamp)}
-                      </p>
-                    </div>
+                    <button
+                      onClick={() => onSelectChat(chat.id, chat.messages)}
+                      className="flex items-center gap-3 flex-1 text-left"
+                    >
+                      <MessageSquare className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                          {chat.title || 'Untitled Chat'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {safeFormatDate(chat.timestamp)}
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteChat(e, chat.id)}
+                      className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                </button>
+                </div>
               ))
             ) : (
               <div className="text-center py-8 flex flex-col items-center">
