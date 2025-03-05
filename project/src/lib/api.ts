@@ -45,46 +45,13 @@ export async function getChatResponse(message: string) {
     }
     
     // If not in dataset, use OpenAI
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: message }],
-        max_tokens: 500
-      });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: message }],
+      max_tokens: 500
+    });
 
-      return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
-    } catch (openaiError) {
-      console.error('OpenAI API error:', openaiError);
-      
-      // Fallback to dataset-like response for common questions
-      const fallbackResponses = {
-        "hello": "Hello! How can I help you today?",
-        "hi": "Hi there! What can I assist you with?",
-        "how are you": "I'm just a computer program, but I'm functioning well! How can I help you?",
-        "what is your name": "I'm an AI Assistant powered by OpenAI. You can call me Assistant.",
-        "who are you": "I'm an AI Assistant designed to help answer your questions and assist with various tasks.",
-        "thank you": "You're welcome! Feel free to ask if you need anything else.",
-        "thanks": "You're welcome! Is there anything else I can help with?",
-        "bye": "Goodbye! Feel free to come back if you have more questions.",
-        "help": "I can help answer questions, provide information, or assist with various topics. Just let me know what you need!"
-      };
-      
-      // Check for simple greetings or common phrases
-      const lowerMessage = message.toLowerCase().trim();
-      for (const [key, response] of Object.entries(fallbackResponses)) {
-        if (lowerMessage.includes(key)) {
-          return response;
-        }
-      }
-      
-      // If no fallback matches, generate a generic response based on the query
-      if (lowerMessage.includes("what is") || lowerMessage.includes("explain") || lowerMessage.includes("how to")) {
-        return `I'd be happy to explain about ${message.replace(/what is|explain|how to/gi, "").trim()}. However, I'm currently having trouble connecting to my knowledge base. Please try again later or rephrase your question.`;
-      }
-      
-      // Default fallback response
-      return "I understand you're asking about " + message.trim() + ". While I'm having trouble connecting to my full knowledge base right now, I'd be happy to try answering a different question or you can try again later.";
-    }
+    return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
   } catch (error) {
     console.error('Error getting chat response:', error);
     return "I apologize, but I'm having trouble processing your request. Please try again with a different question.";
@@ -197,46 +164,23 @@ export async function saveChatHistory(userId: string, messages: any[]) {
     const title = userMessages.length > 0 
       ? userMessages[0].text.substring(0, 30) + (userMessages[0].text.length > 30 ? '...' : '')
       : 'New conversation';
-    
-    // Check if the title column exists
-    const { error: schemaError } = await supabase
+
+    const { data, error } = await supabase
       .from('user_chats')
-      .select('id')
-      .limit(1);
+      .insert([
+        {
+          user_id: userId,
+          messages: messages,
+          title: title,
+          updated_at: new Date().toISOString(),
+          archived: false
+        }
+      ]);
     
-    // If there's an error about the title column, insert without it
-    if (schemaError && schemaError.message.includes('title')) {
-      const { data, error } = await supabase
-        .from('user_chats')
-        .insert([
-          {
-            user_id: userId,
-            messages: messages,
-            updated_at: new Date().toISOString()
-          }
-        ]);
-      
-      if (error) throw error;
-      return data;
-    } else {
-      // If no error, proceed with title
-      const { data, error } = await supabase
-        .from('user_chats')
-        .insert([
-          {
-            user_id: userId,
-            messages: messages,
-            title: title,
-            updated_at: new Date().toISOString()
-          }
-        ]);
-      
-      if (error) throw error;
-      return data;
-    }
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error saving chat history:', error);
-    // Return empty array instead of throwing to prevent UI errors
     return [];
   }
 }
@@ -248,67 +192,29 @@ export async function getChatHistory(userId: string) {
       return [];
     }
 
-    // First try with title column
-    try {
-      const { data, error } = await supabase
-        .from('user_chats')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(30);
+    const { data, error } = await supabase
+      .from('user_chats')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(30);
 
-      if (error) throw error;
-      
-      // Transform the data to match the expected format
-      return data.map(chat => ({
-        id: chat.id,
-        title: chat.title || 'Untitled Chat',
-        timestamp: chat.created_at,
-        messages: chat.messages || []
-      }));
-    } catch (titleError) {
-      // If error is about title column, try without it
-      if (titleError.message && titleError.message.includes('title')) {
-        const { data, error } = await supabase
-          .from('user_chats')
-          .select('id, user_id, messages, created_at, updated_at')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(30);
-
-        if (error) throw error;
-        
-        // Transform the data and add default title
-        return data.map(chat => {
-          // Try to extract title from first user message
-          let title = 'Untitled Chat';
-          if (chat.messages && Array.isArray(chat.messages) && chat.messages.length > 0) {
-            const userMessages = chat.messages.filter((m: any) => !m.isBot);
-            if (userMessages.length > 0) {
-              title = userMessages[0].text.substring(0, 30) + 
-                (userMessages[0].text.length > 30 ? '...' : '');
-            }
-          }
-          
-          return {
-            id: chat.id,
-            title: title,
-            timestamp: chat.created_at,
-            messages: chat.messages || []
-          };
-        });
-      } else {
-        throw titleError;
-      }
-    }
+    if (error) throw error;
+    
+    return data.map(chat => ({
+      id: chat.id,
+      title: chat.title || 'Untitled Chat',
+      timestamp: chat.created_at,
+      messages: chat.messages || [],
+      archived: chat.archived || false
+    }));
   } catch (error) {
     console.error('Error fetching chat history:', error);
-    // Return empty array instead of throwing to prevent UI errors
     return [];
   }
 }
 
-export async function updateChatHistory(chatId: string, messages: any[], title?: string) {
+export async function updateChatHistory(chatId: string, messages: any[], title?: string, archived?: boolean) {
   try {
     if (!chatId || !messages) {
       console.warn('Invalid data for updating chat history');
@@ -320,39 +226,25 @@ export async function updateChatHistory(chatId: string, messages: any[], title?:
       updated_at: new Date().toISOString()
     };
 
-    // Check if the title column exists
-    const { error: schemaError } = await supabase
-      .from('user_chats')
-      .select('id, title')
-      .eq('id', chatId)
-      .limit(1);
-    
-    // If there's an error about the title column, update without it
-    if (schemaError && schemaError.message.includes('title')) {
-      const { data, error } = await supabase
-        .from('user_chats')
-        .update({
-          messages: messages,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', chatId);
-      
-      if (error) throw error;
-      return data;
-    } else {
-      // If title is provided and no error, include it
-      if (title) {
-        updateData.title = title;
-      }
-      
-      const { data, error } = await supabase
-        .from('user_chats')
-        .update(updateData)
-        .eq('id', chatId);
-
-      if (error) throw error;
-      return data;
+    if (title !== undefined) {
+      updateData.title = title;
     }
+
+    if (archived !== undefined) {
+      updateData.archived = archived;
+    }
+
+    const { data, error } = await supabase
+      .from('user_chats')
+      .update(updateData)
+      .eq('id', chatId);
+
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+
+    return data;
   } catch (error) {
     console.error('Error updating chat history:', error);
     return null;

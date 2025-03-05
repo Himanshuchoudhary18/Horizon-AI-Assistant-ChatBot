@@ -1,5 +1,5 @@
-import React from 'react';
-import { MessageSquare, ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageSquare, ChevronLeft, ChevronRight, Plus, X, Trash2, Share2, Edit2, Archive } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import { useAuthStore } from '../store/authStore';
 
@@ -8,6 +8,7 @@ interface ChatHistoryItem {
   title: string;
   timestamp: Date | string;
   messages?: any[];
+  archived?: boolean;
 }
 
 interface ChatSidebarProps {
@@ -18,6 +19,9 @@ interface ChatSidebarProps {
   currentChatId: string | null;
   onNewChat: () => void;
   onDeleteChat: (id: string) => void;
+  onRenameChat: (id: string, newTitle: string) => void;
+  onArchiveChat: (id: string, archive: boolean) => void;
+  onShareChat: (id: string) => void;
   isMobile?: boolean;
 }
 
@@ -29,23 +33,25 @@ export function ChatSidebar({
   currentChatId,
   onNewChat,
   onDeleteChat,
+  onRenameChat,
+  onArchiveChat,
+  onShareChat,
   isMobile = false
 }: ChatSidebarProps) {
   const { user } = useAuthStore();
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState('');
 
   // Function to safely format dates
   const safeFormatDate = (date: Date | string) => {
     if (!date) return 'Unknown date';
     
     try {
-      // If it's a string, try to convert to Date
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      
-      // Check if date is valid before formatting
       if (isValid(dateObj)) {
         return format(dateObj, 'MMM d, yyyy h:mm a');
       }
-      
       return 'Invalid date';
     } catch (error) {
       console.error('Date formatting error:', error);
@@ -55,10 +61,51 @@ export function ChatSidebar({
 
   const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this chat?')) {
+    if (window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
       onDeleteChat(chatId);
+      setMenuOpen(null);
     }
   };
+
+  const handleRenameClick = (e: React.MouseEvent, chatId: string, currentTitle: string) => {
+    e.stopPropagation();
+    setEditingTitle(chatId);
+    setNewTitle(currentTitle);
+    setMenuOpen(null);
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent, chatId: string) => {
+    e.preventDefault();
+    if (newTitle.trim()) {
+      onRenameChat(chatId, newTitle.trim());
+      setEditingTitle(null);
+      setNewTitle('');
+    }
+  };
+
+  const handleArchiveClick = (e: React.MouseEvent, chatId: string, isArchived: boolean) => {
+    e.stopPropagation();
+    onArchiveChat(chatId, !isArchived);
+    setMenuOpen(null);
+  };
+
+  const handleShareClick = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    onShareChat(chatId);
+    setMenuOpen(null);
+  };
+
+  const toggleMenu = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    setMenuOpen(menuOpen === chatId ? null : chatId);
+  };
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => setMenuOpen(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -116,35 +163,83 @@ export function ChatSidebar({
               chatHistory.map((chat) => (
                 <div
                   key={chat.id}
-                  className={`w-full p-3 rounded-lg transition-colors group ${
+                  className={`w-full p-3 rounded-lg transition-colors group relative ${
                     currentChatId === chat.id
                       ? 'bg-purple-100 dark:bg-purple-900'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => onSelectChat(chat.id, chat.messages)}
-                      className="flex items-center gap-3 flex-1 text-left"
-                    >
-                      <MessageSquare className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                          {chat.title || 'Untitled Chat'}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {safeFormatDate(chat.timestamp)}
-                        </p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteChat(e, chat.id)}
-                      className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
-                      aria-label="Delete chat"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {editingTitle === chat.id ? (
+                    <form onSubmit={(e) => handleRenameSubmit(e, chat.id)} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        className="flex-1 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        autoFocus
+                        onBlur={() => setEditingTitle(null)}
+                      />
+                      <button type="submit" className="text-sm text-purple-600 dark:text-purple-400">Save</button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => onSelectChat(chat.id, chat.messages)}
+                        className="flex items-center gap-3 flex-1 text-left"
+                      >
+                        <MessageSquare className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                            {chat.title || 'Untitled Chat'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {safeFormatDate(chat.timestamp)}
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => toggleMenu(e, chat.id)}
+                        className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Chat options"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      {menuOpen === chat.id && (
+                        <div className="absolute right-0 top-full mt-1 w-48 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50">
+                          <div className="py-1" role="menu">
+                            <button
+                              onClick={(e) => handleRenameClick(e, chat.id, chat.title)}
+                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                            >
+                              <Edit2 className="w-4 h-4 mr-2" /> Rename
+                            </button>
+                            <button
+                              onClick={(e) => handleShareClick(e, chat.id)}
+                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                            >
+                              <Share2 className="w-4 h-4 mr-2" /> Share
+                            </button>
+                            <button
+                              onClick={(e) => handleArchiveClick(e, chat.id, !!chat.archived)}
+                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                            >
+                              <Archive className="w-4 h-4 mr-2" /> {chat.archived ? 'Unarchive' : 'Archive'}
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteChat(e, chat.id)}
+                              className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
