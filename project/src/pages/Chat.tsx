@@ -231,6 +231,72 @@ export function Chat() {
     }
   };
 
+  const handleRenameChat = async (id: string, newTitle: string) => {
+    try {
+      const chatToUpdate = chatHistory.find(chat => chat.id === id);
+      if (chatToUpdate) {
+        const success = await updateChatHistory(id, chatToUpdate.messages, newTitle);
+        if (success) {
+          await loadChatHistory();
+        } else {
+          alert('Failed to rename chat. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error renaming chat:', error);
+      alert('Failed to rename chat. Please try again.');
+    }
+  };
+
+  const handleArchiveChat = async (id: string, archive: boolean) => {
+    try {
+      const chatToUpdate = chatHistory.find(chat => chat.id === id);
+      if (chatToUpdate) {
+        // Add archived status to the chat metadata
+        const success = await updateChatHistory(id, chatToUpdate.messages, chatToUpdate.title, archive);
+        if (success) {
+          await loadChatHistory();
+          // If archiving the current chat, create a new chat
+          if (archive && id === currentChatId) {
+            handleNewChat();
+          }
+        } else {
+          alert('Failed to archive chat. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error archiving chat:', error);
+      alert('Failed to archive chat. Please try again.');
+    }
+  };
+
+  const handleShareChat = async (id: string) => {
+    try {
+      const chatToShare = chatHistory.find(chat => chat.id === id);
+      if (chatToShare) {
+        // Create a shareable text version of the chat
+        const chatText = chatToShare.messages
+          .map(msg => `${msg.isBot ? 'Assistant' : 'User'}: ${msg.text}`)
+          .join('\n\n');
+        
+        // Use the Web Share API if available
+        if (navigator.share) {
+          await navigator.share({
+            title: chatToShare.title || 'Shared Chat',
+            text: chatText,
+          });
+        } else {
+          // Fallback to clipboard
+          await navigator.clipboard.writeText(chatText);
+          alert('Chat copied to clipboard!');
+        }
+      }
+    } catch (error) {
+      console.error('Error sharing chat:', error);
+      alert('Failed to share chat. Please try again.');
+    }
+  };
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -245,6 +311,9 @@ export function Chat() {
         currentChatId={currentChatId}
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
+        onArchiveChat={handleArchiveChat}
+        onShareChat={handleShareChat}
         isMobile={isMobile}
       />
       
