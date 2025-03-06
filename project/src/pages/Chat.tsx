@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sun, Moon, Plus, Menu } from 'lucide-react';
+import { Send, Sun, Moon, Plus, Menu, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ChatMessage } from '../components/ChatMessage';
 import { ChatSidebar } from '../components/ChatSidebar';
@@ -28,6 +28,7 @@ export function Chat() {
     return false;
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isWebReferencesOpen, setIsWebReferencesOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -40,24 +41,19 @@ export function Chat() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Close sidebar by default on mobile
-      if (mobile && isSidebarOpen) {
+      if (mobile) {
         setIsSidebarOpen(false);
-      } else if (!mobile && !isSidebarOpen) {
-        // Open sidebar by default on desktop
+        setIsWebReferencesOpen(false);
+      } else {
         setIsSidebarOpen(true);
+        setIsWebReferencesOpen(true);
       }
     };
     
-    // Initial check
     checkMobile();
-    
-    // Add event listener
     window.addEventListener('resize', checkMobile);
-    
-    // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
-  }, [isSidebarOpen]);
+  }, []);
 
   useEffect(() => {
     if (isDark) {
@@ -120,7 +116,6 @@ export function Chat() {
     setInput('');
     setIsTyping(true);
 
-    // Fetch web references for the query
     fetchWebReferences(input);
 
     try {
@@ -136,24 +131,20 @@ export function Chat() {
       const updatedMessages = [...messages, userMessage, botResponse];
       setMessages(updatedMessages);
       
-      // Save chat to history
       if (user) {
         if (currentChatId) {
-          // Update existing chat
           await updateChatHistory(currentChatId, updatedMessages);
         } else {
-          // Create new chat
           const result = await saveChatHistory(user.id, updatedMessages);
           if (result && result[0]) {
             setCurrentChatId(result[0].id);
+            await loadChatHistory();
           }
         }
-        loadChatHistory(); // Reload chat history
       }
     } catch (error) {
       console.error('Error getting response:', error);
       
-      // Add error message
       const errorResponse: ChatMessageType = {
         id: (Date.now() + 1).toString(),
         text: "I'm sorry, I couldn't process your request. Please try again later.",
@@ -176,7 +167,6 @@ export function Chat() {
     if (chatMessages && Array.isArray(chatMessages)) {
       setMessages(chatMessages);
       
-      // Find the first user message to set as the current query for web references
       const userMessage = chatMessages.find(msg => !msg.isBot);
       if (userMessage) {
         fetchWebReferences(userMessage.text);
@@ -185,7 +175,6 @@ export function Chat() {
         setCurrentQuery('');
       }
     }
-    // Close sidebar on mobile after selecting a chat
     if (isMobile) {
       setIsSidebarOpen(false);
     }
@@ -203,7 +192,6 @@ export function Chat() {
     ]);
     setWebReferences([]);
     setCurrentQuery('');
-    // Close sidebar on mobile after creating a new chat
     if (isMobile) {
       setIsSidebarOpen(false);
     }
@@ -211,23 +199,17 @@ export function Chat() {
 
   const handleDeleteChat = async (id: string) => {
     try {
-      console.log('Deleting chat with ID:', id);
       const success = await deleteChat(id);
-      console.log('Delete result:', success);
       
       if (success) {
-        // If the deleted chat was the current one, create a new chat
+        setChatHistory(prevHistory => prevHistory.filter(chat => chat.id !== id));
+        
         if (id === currentChatId) {
           handleNewChat();
         }
-        // Reload chat history
-        await loadChatHistory();
-      } else {
-        alert('Failed to delete chat. Please try again.');
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
-      alert('Failed to delete chat. Please try again.');
     }
   };
 
@@ -235,16 +217,11 @@ export function Chat() {
     try {
       const chatToUpdate = chatHistory.find(chat => chat.id === id);
       if (chatToUpdate) {
-        const success = await updateChatHistory(id, chatToUpdate.messages, newTitle);
-        if (success) {
-          await loadChatHistory();
-        } else {
-          alert('Failed to rename chat. Please try again.');
-        }
+        await updateChatHistory(id, chatToUpdate.messages, newTitle);
+        await loadChatHistory();
       }
     } catch (error) {
       console.error('Error renaming chat:', error);
-      alert('Failed to rename chat. Please try again.');
     }
   };
 
@@ -252,21 +229,14 @@ export function Chat() {
     try {
       const chatToUpdate = chatHistory.find(chat => chat.id === id);
       if (chatToUpdate) {
-        // Add archived status to the chat metadata
-        const success = await updateChatHistory(id, chatToUpdate.messages, chatToUpdate.title, archive);
-        if (success) {
-          await loadChatHistory();
-          // If archiving the current chat, create a new chat
-          if (archive && id === currentChatId) {
-            handleNewChat();
-          }
-        } else {
-          alert('Failed to archive chat. Please try again.');
+        await updateChatHistory(id, chatToUpdate.messages, chatToUpdate.title, archive);
+        await loadChatHistory();
+        if (archive && id === currentChatId) {
+          handleNewChat();
         }
       }
     } catch (error) {
       console.error('Error archiving chat:', error);
-      alert('Failed to archive chat. Please try again.');
     }
   };
 
@@ -274,31 +244,37 @@ export function Chat() {
     try {
       const chatToShare = chatHistory.find(chat => chat.id === id);
       if (chatToShare) {
-        // Create a shareable text version of the chat
         const chatText = chatToShare.messages
           .map(msg => `${msg.isBot ? 'Assistant' : 'User'}: ${msg.text}`)
           .join('\n\n');
         
-        // Use the Web Share API if available
         if (navigator.share) {
           await navigator.share({
             title: chatToShare.title || 'Shared Chat',
             text: chatText,
           });
         } else {
-          // Fallback to clipboard
           await navigator.clipboard.writeText(chatText);
           alert('Chat copied to clipboard!');
         }
       }
     } catch (error) {
       console.error('Error sharing chat:', error);
-      alert('Failed to share chat. Please try again.');
     }
   };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+    if (isMobile && !isSidebarOpen) {
+      setIsWebReferencesOpen(false);
+    }
+  };
+
+  const toggleWebReferences = () => {
+    setIsWebReferencesOpen(!isWebReferencesOpen);
+    if (isMobile && !isWebReferencesOpen) {
+      setIsSidebarOpen(false);
+    }
   };
 
   return (
@@ -316,23 +292,24 @@ export function Chat() {
         onShareChat={handleShareChat}
         isMobile={isMobile}
       />
-      
+
       <div className={`max-w-6xl mx-auto w-full flex flex-col md:flex-row gap-0 md:gap-4 transition-all duration-300 ${
         isSidebarOpen && !isMobile ? 'ml-0 md:ml-72' : ''
       }`}>
-        {/* Main Chat Area */}
         <div className="glass-effect dark:bg-gray-800/50 rounded-none md:rounded-2xl shadow-lg overflow-hidden flex-1 border border-gray-100 dark:border-gray-700">
           <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 md:p-6 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              {isMobile && (
-                <button
-                  onClick={toggleSidebar}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors mr-2"
-                  aria-label="Toggle sidebar"
-                >
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                {isSidebarOpen ? (
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                ) : (
                   <Menu className="w-5 h-5 text-white" />
-                </button>
-              )}
+                )}
+              </button>
               <div>
                 <div className="flex items-center gap-2 md:gap-3">
                   <img src="/ai-assistant-logo.svg" alt="AI Assistant Logo" className="w-6 h-6 md:w-8 md:h-8" />
@@ -342,6 +319,19 @@ export function Chat() {
               </div>
             </div>
             <div className="flex items-center gap-1 md:gap-2">
+              {isMobile && (
+                <button
+                  onClick={toggleWebReferences}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Toggle web references"
+                >
+                  {isWebReferencesOpen ? (
+                    <ChevronRight className="w-5 h-5 text-white" />
+                  ) : (
+                    <BookOpen className="w-5 h-5 text-white" />
+                  )}
+                </button>
+              )}
               <button
                 onClick={handleNewChat}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -406,8 +396,13 @@ export function Chat() {
           </form>
         </div>
         
-        {/* Web References Panel - Hidden on mobile */}
-        <div className="hidden md:block w-80 glass-effect dark:bg-gray-800/50 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 h-[calc(100vh-2rem)]">
+        <div className={`${
+          isMobile 
+            ? `fixed right-0 top-0 bottom-0 w-80 transform transition-transform duration-300 ${
+                isWebReferencesOpen ? 'translate-x-0' : 'translate-x-full'
+              }`
+            : 'hidden md:block w-80'
+        } glass-effect dark:bg-gray-800/50 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 h-[calc(100vh-2rem)]`}>
           <WebReferences 
             references={webReferences} 
             isLoading={isLoadingReferences} 
