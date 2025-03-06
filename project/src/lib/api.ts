@@ -2,49 +2,40 @@ import OpenAI from 'openai';
 import { supabase } from './supabase';
 import { qaDataset } from '../data/chatData';
 
-// Initialize OpenAI API
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Enable client-side usage
+  dangerouslyAllowBrowser: true
 });
 
-// Function to find a matching answer from the dataset
 function findAnswerInDataset(question: string) {
-  // Convert question to lowercase for case-insensitive matching
   const normalizedQuestion = question.toLowerCase().trim();
   
-  // Try to find an exact match first
   const exactMatch = qaDataset.find(
     qa => qa.question.toLowerCase() === normalizedQuestion
   );
   
   if (exactMatch) return exactMatch.answer;
   
-  // If no exact match, look for questions that contain the user's query
   const partialMatches = qaDataset.filter(
     qa => qa.question.toLowerCase().includes(normalizedQuestion) ||
           normalizedQuestion.includes(qa.question.toLowerCase())
   );
   
   if (partialMatches.length > 0) {
-    // Return the answer from the first partial match
     return partialMatches[0].answer;
   }
   
-  // No match found in the dataset
   return null;
 }
 
 export async function getChatResponse(message: string) {
   try {
-    // First check if we have an answer in our dataset
     const datasetAnswer = findAnswerInDataset(message);
     
     if (datasetAnswer) {
       return datasetAnswer;
     }
     
-    // If not in dataset, use OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],
@@ -60,90 +51,95 @@ export async function getChatResponse(message: string) {
 
 export async function getWebReferences(query: string) {
   try {
-    // This is a mock implementation - in a real app, you would call a search API
-    // For demo purposes, we'll generate some fake references based on the query
-    
-    // Common topics with prepared responses
     const topics = {
       git: [
         {
-          title: "Git - Wikipedia",
-          url: "https://en.wikipedia.org/wiki/Git",
-          description: "Git is a distributed version control system that tracks changes in any set of computer files, usually used for coordinating work among programmers collaboratively developing source code during software development.",
-          source: "Wikipedia"
-        },
-        {
           title: "Git Documentation",
           url: "https://git-scm.com/doc",
-          description: "The official Git documentation, including reference manuals, books, and videos to help you learn Git.",
+          description: "Official Git documentation with comprehensive guides and reference materials.",
           source: "git-scm.com"
+        },
+        {
+          title: "GitHub Guides",
+          url: "https://guides.github.com/",
+          description: "Essential guides for using Git and GitHub effectively.",
+          source: "GitHub"
         },
         {
           title: "Learn Git Branching",
           url: "https://learngitbranching.js.org/",
-          description: "An interactive Git visualization tool to educate and challenge both beginners and advanced developers.",
+          description: "Interactive Git visualization tool for learning Git commands and workflows.",
           source: "learngitbranching.js.org"
         }
       ],
       javascript: [
         {
-          title: "JavaScript - MDN Web Docs",
-          url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-          description: "JavaScript (JS) is a lightweight, interpreted, or just-in-time compiled programming language with first-class functions.",
+          title: "MDN JavaScript Guide",
+          url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+          description: "Comprehensive guide to JavaScript for both beginners and advanced developers.",
           source: "Mozilla Developer Network"
         },
         {
           title: "JavaScript.info",
           url: "https://javascript.info/",
-          description: "The Modern JavaScript Tutorial: simple, but detailed explanations with examples and tasks.",
+          description: "Modern JavaScript tutorial with detailed explanations and practical examples.",
           source: "JavaScript.info"
+        },
+        {
+          title: "V8 JavaScript Engine Blog",
+          url: "https://v8.dev/blog",
+          description: "Technical articles about JavaScript and V8 engine internals.",
+          source: "V8 Dev"
         }
       ],
       react: [
         {
-          title: "React – A JavaScript library for building user interfaces",
-          url: "https://reactjs.org/",
-          description: "React makes it painless to create interactive UIs. Design simple views for each state in your application.",
-          source: "reactjs.org"
+          title: "React Documentation",
+          url: "https://react.dev/",
+          description: "Official React documentation with guides, API references, and best practices.",
+          source: "React.dev"
         },
         {
-          title: "Getting Started with React",
-          url: "https://reactjs.org/docs/getting-started.html",
-          description: "This page is an overview of the React documentation and related resources.",
-          source: "React Docs"
+          title: "React GitHub Repository",
+          url: "https://github.com/facebook/react",
+          description: "Official React source code and documentation on GitHub.",
+          source: "GitHub"
+        },
+        {
+          title: "React Blog",
+          url: "https://react.dev/blog",
+          description: "Official React blog with updates, releases, and technical articles.",
+          source: "React Team"
         }
       ]
     };
     
-    // Normalize the query
     const normalizedQuery = query.toLowerCase();
     
-    // Check if the query contains any of our prepared topics
     for (const [topic, refs] of Object.entries(topics)) {
       if (normalizedQuery.includes(topic)) {
         return refs;
       }
     }
     
-    // For queries we don't have prepared responses for, generate some generic ones
     return [
       {
-        title: `${query} - Overview and Introduction`,
-        url: `https://en.wikipedia.org/wiki/${query.replace(/\s+/g, '_')}`,
-        description: `Learn about ${query} - history, concepts, and practical applications.`,
-        source: "Wikipedia"
+        title: `${query} - Documentation and Resources`,
+        url: `https://devdocs.io/${query.replace(/\s+/g, '-').toLowerCase()}`,
+        description: `Comprehensive documentation and resources about ${query}.`,
+        source: "DevDocs.io"
       },
       {
-        title: `Understanding ${query} - A Comprehensive Guide`,
-        url: `https://www.example.com/guides/${query.replace(/\s+/g, '-').toLowerCase()}`,
-        description: `This comprehensive guide explains ${query} in detail with examples and best practices.`,
-        source: "Example Learning Platform"
+        title: `${query} - Stack Overflow`,
+        url: `https://stackoverflow.com/questions/tagged/${query.replace(/\s+/g, '-').toLowerCase()}`,
+        description: `Community questions and answers about ${query}.`,
+        source: "Stack Overflow"
       },
       {
-        title: `${query} Tutorial for Beginners`,
-        url: `https://www.tutorialspoint.com/${query.replace(/\s+/g, '_').toLowerCase()}/index.htm`,
-        description: `A step-by-step tutorial on ${query} for beginners with practical examples and exercises.`,
-        source: "TutorialsPoint"
+        title: `${query} - GitHub Topics`,
+        url: `https://github.com/topics/${query.replace(/\s+/g, '-').toLowerCase()}`,
+        description: `Open source projects and resources related to ${query}.`,
+        source: "GitHub"
       }
     ];
   } catch (error) {
@@ -159,7 +155,6 @@ export async function saveChatHistory(userId: string, messages: any[]) {
       return null;
     }
 
-    // Extract the first user message as the title (or use a default)
     const userMessages = messages.filter(m => !m.isBot);
     const title = userMessages.length > 0 
       ? userMessages[0].text.substring(0, 30) + (userMessages[0].text.length > 30 ? '...' : '')
@@ -175,13 +170,14 @@ export async function saveChatHistory(userId: string, messages: any[]) {
           updated_at: new Date().toISOString(),
           archived: false
         }
-      ]);
+      ])
+      .select();
     
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('Error saving chat history:', error);
-    return [];
+    return null;
   }
 }
 
@@ -237,13 +233,10 @@ export async function updateChatHistory(chatId: string, messages: any[], title?:
     const { data, error } = await supabase
       .from('user_chats')
       .update(updateData)
-      .eq('id', chatId);
+      .eq('id', chatId)
+      .select();
 
-    if (error) {
-      console.error('Supabase update error:', error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   } catch (error) {
     console.error('Error updating chat history:', error);
@@ -263,11 +256,7 @@ export async function deleteChat(chatId: string) {
       .delete()
       .eq('id', chatId);
     
-    if (error) {
-      console.error('Supabase delete error:', error);
-      throw error;
-    }
-    
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Error deleting chat:', error);
