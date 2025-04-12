@@ -1,4 +1,4 @@
-Horizon-AI-ChatBot
+Sigma-AI-ChatBot
 This project demonstrates an interactive, responsive chatbot designed to engage users through an intuitive drag-and-drop conversation flow, interactive elements (buttons, quick replies, menus), and a design that adapts seamlessly across desktop, tablet, and mobile devices. Although the current version is trained on a small dataset—which may limit its ability to answer some questions—it includes fallback responses and is structured for iterative data enhancement to improve performance over time.
 
 Features
@@ -35,14 +35,14 @@ git clone https://github.com/Himanshuchoudhary18/Question-Answering-Assistant-Ch
 cd Question-Answering-Assistant-ChatBot
 
 2. Import the Chatbot Template
-Use the provided templates and configuration files to set up your chatbot project within the Bolt.new platform.
+Use the provided templates and configuration files to set up your chatbot project.
 3. Customize the Bot
 Modify conversation flows, add interactive elements, and adjust the UI to suit your needs.
 4. Train and Test
 Train: Train your chatbot using the available dataset.
 Test: Run the chatbot in preview mode to ensure all interactions and responses work as expected.
 5. Deploy
-Generate the embed code from Bolt.new and integrate the chatbot with your website or preferred messaging platform.
+Generate the embed code and integrate the chatbot with your website or preferred messaging platform.
 Limitations and Future Improvements
 Limited Training Data:
 The current dataset is small, which may affect the chatbot's ability to accurately answer a wide variety of questions.
@@ -58,7 +58,7 @@ Contributions are welcome! If you have ideas, improvements, or bug fixes, please
 
 Visit the Website
 You can try out the chatbot by visiting the live demo at:
-[https://questionanswer-ai.netlify.app/](https://questionanswer-ai.netlify.app/)
+[https://questionanswer-ai.netlify.app/](https://sigmaai-znj7.onrender.com/)
 
 Contact
 For questions or further information, please open an issue or contact the maintainer at himanshuchoudhsary1@gmail.com.
