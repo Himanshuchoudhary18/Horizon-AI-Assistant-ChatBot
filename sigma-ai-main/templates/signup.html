@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles-signup.css') }}">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="signup-box">
+        <span class="close-btn">&times;</span>
+        <h2>Sign Up</h2>
+
+        <!-- Email Input -->
+        <div class="input-box">
+            <i class="fa fa-envelope"></i>
+            <input type="email" id="signup-email" placeholder="Enter your email">
+        </div>
+
+        <!-- Password Input -->
+        <div class="input-box">
+            <i class="fa fa-lock"></i>
+            <input type="password" id="signup-password" placeholder="Enter your password">
+        </div>
+
+        <!-- Signup Button -->
+        <button class="signup-btn" id="signup-btn">Sign Up</button>
+
+        <!-- Google Signup Button -->
+        <button class="google-btn" id="google-signin-btn">
+            <i class="fa-brands fa-google"></i> Sign up with Google
+        </button>
+
+        <p>Already have an account? <a href="/">Log in</a>
+
+    </div>
+</div>
+
+<!-- ✅ Load Firebase Authentication Script -->
+<script type="module">
+    import { signup, googleSignIn } from "{{ url_for('static', filename='script-signup.js') }}";
+
+    document.getElementById("signup-btn").addEventListener("click", signup);
+    document.getElementById("google-signin-btn").addEventListener("click", googleSignIn);
+</script>
+
+</body>
+</html>

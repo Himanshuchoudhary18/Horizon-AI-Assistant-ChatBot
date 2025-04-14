@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Question Answering</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles-model.css') }}">
+</head>
+<body>
+
+<!-- Logout Button (Directly Placed, No Navbar) -->
+<a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+
+<!-- Chat Container -->
+<div class="container">
+    <div class="chat-box">
+        <div class="messages" id="messages"></div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="question" placeholder="Ask a question..." required>
+        <button id="mic-btn">🎤</button>
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script-model.js') }}"></script>
+</body>
+</html>

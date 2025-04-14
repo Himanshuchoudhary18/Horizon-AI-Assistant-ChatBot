@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Sigma</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles-about.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="{{ url_for('static', filename='script-about.js') }}" defer></script>
+</head>
+<body>
+
+<nav class="navbar">
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="#" onclick="toggleLogin()">Login</a></li>
+    </ul>
+</nav>
+
+<!-- Main Container -->
+<div class="container">
+    <h1>AI-Powered Question Answering System</h1>
+    <p>Experience the power of AI with Sigma.</p>
+
+    <h2>What is Sigma?</h2>
+    <p>
+        Sigma is a state-of-the-art <strong>AI-powered question-answering system</strong> leveraging
+        <strong>Large Language Models (LLMs)</strong> and <strong>Natural Language Processing (NLP)</strong>
+        to provide precise, intelligent responses. Designed for <strong>efficiency, accuracy, and adaptability</strong>,
+        Sigma transforms AI interactions.
+    </p>
+
+    <h2 class="neon-text">Meet the Creators</h2>
+
+    <!-- Team Section -->
+    <div class="team">
+        <div class="team-member" onmouseover="showDetails(this)" onmouseout="hideDetails(this)">
+            <img src="{{ url_for('static', filename='ujjwal.jpg') }}" alt="Ujjwal Kumar Tiwari">
+            <div class="info">
+                <h3>Ujjwal Kumar Tiwari</h3>
+                <p>Lead AI Developer | NLP & LLM Specialist.</p>
+            </div>
+        </div>
+
+        <div class="team-member" onmouseover="showDetails(this)" onmouseout="hideDetails(this)">
+            <img src="{{ url_for('static', filename='rishav.png') }}" alt="Rishav Mahajan">
+            <div class="info">
+                <h3>Rishav Mahajan</h3>
+                <p>Backend Engineer | Scalable System Expert.</p>
+            </div>
+        </div>
+
+        <div class="team-member" onmouseover="showDetails(this)" onmouseout="hideDetails(this)">
+            <img src="{{ url_for('static', filename='aryan.png') }}" alt="Aryan Verma">
+            <div class="info">
+                <h3>Aryan Verma</h3>
+                <p>Frontend Developer | UX/UI Design & Animations.</p>
+            </div>
+        </div>
+
+        <div class="team-member" onmouseover="showDetails(this)" onmouseout="hideDetails(this)">
+            <img src="{{ url_for('static', filename='dhirendra.png') }}" alt="Dhirendra Pratap Pun">
+            <div class="info">
+                <h3>Dhirendra Pratap Pun</h3>
+                <p>Data Scientist | AI Model Training.</p>
+            </div>
+        </div>
+
+        <div class="team-member" onmouseover="showDetails(this)" onmouseout="hideDetails(this)">
+            <img src="{{ url_for('static', filename='himanshu.png') }}" alt="Himanshu">
+            <div class="info">
+                <h3>Himanshu</h3>
+                <p>Cloud Architect | Manages AI Deployments.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

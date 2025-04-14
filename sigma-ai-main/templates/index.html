@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Sigma</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Firebase SDK -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script type="module" src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar">
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="#" onclick="toggleLogin()">Login</a></li>
+    </ul>
+</nav>
+
+<!-- Login Form Container -->
+<div class="login-container">
+    <div class="login-box">
+        <div class="close-btn" onclick="closeLogin()">&times;</div>
+        <h2>Login</h2>
+
+        <form id="signin-form">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="login-email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="login-password" placeholder="Enter your password" required>
+            </div>
+
+            <div class="remember-forgot">
+                <input type="checkbox" id="remember">
+                <label for="remember">Remember me</label>
+                <a href="#">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn">Log in</button>
+
+            <!-- Google Sign-in Button -->
+            <button type="button" class="google-btn" id="google-login">
+                <i class="fab fa-google"></i> Login with Google
+            </button>
+
+
+            <p>Don't have an account? <a href="{{ url_for('signup') }}">Register</a></p>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ✅ Show Login Popup
+    function toggleLogin() {
+        document.querySelector(".login-container").style.display = "flex";
+    }
+
+    // ✅ Close Login Popup
+    function closeLogin() {
+        document.querySelector(".login-container").style.display = "none";
+    }
+</script>
+
+</body>
+</html>
